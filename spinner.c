@@ -25,6 +25,9 @@ void handle_sigalrm(int signal) {
 int main(int argc, char** argv) {
 	assert(!signal(SIGINT, handle_sigint));
 	assert(!signal(SIGALRM, handle_sigalrm));
+
+	printf("PID %zu\n", getpid());
+
 	alarm(1);
 
 	while(run) {
