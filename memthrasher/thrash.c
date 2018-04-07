@@ -17,6 +17,8 @@ volatile bool run = true;
 
 volatile unsigned long long last = 0, cnt = 0;
 
+volatile NATIVE_WIDTH_TYPE target;
+
 void handle_sigint(int signal) {
 	run = false;
 }
@@ -30,7 +32,6 @@ void handle_sigalrm(int signal) {
 }
 
 int main(int argc, char** argv) {
-	NATIVE_WIDTH_TYPE target;
 	off_t index;
 	assert(BUFF_SIZE);
 	size_t buff_len = BUFF_SIZE / sizeof(NATIVE_WIDTH_TYPE);
