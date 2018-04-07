@@ -16,7 +16,9 @@ void handle_sigint(int signal) {
 
 void handle_sigalrm(int signal) {
 	assert(!alarm(1));
-	printf("%llu k spins per second\n", (cnt - last) / 1000);
+	printf("%llu k spins per second", (cnt - last) / 1000);
+	fflush(stdout);
+	printf("\r");
 	last = cnt;
 }
 
