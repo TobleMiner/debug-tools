@@ -13,6 +13,12 @@
 #define NATIVE_WIDTH_TYPE uint64_t
 #define BUFF_SIZE MB(256)
 
+enum {
+	THRASH_RO,
+	THRASH_WO,
+	THRASH_RW
+};
+
 volatile bool run = true;
 
 volatile unsigned long long last = 0, cnt = 0;
@@ -31,7 +37,7 @@ void handle_sigalrm(int signal) {
 	last = cnt;
 }
 
-int main(int argc, char** argv) {
+void thrash_ro() {
 	off_t index;
 	assert(BUFF_SIZE);
 	size_t buff_len = BUFF_SIZE / sizeof(NATIVE_WIDTH_TYPE);
@@ -40,13 +46,6 @@ int main(int argc, char** argv) {
 
 	NATIVE_WIDTH_TYPE *buff = malloc(BUFF_SIZE);
 	assert(buff);
-
-	assert(!signal(SIGINT, handle_sigint));
-	assert(!signal(SIGALRM, handle_sigalrm));
-
-	printf("PID %zu\n", getpid());
-
-	alarm(1);
 
 	while(run) {
 		target = buff[index++];
@@ -58,6 +57,75 @@ int main(int argc, char** argv) {
 	}
 
 	free(buff);
+}
+
+void thrash_wo() {
+	off_t index;
+	assert(BUFF_SIZE);
+	size_t buff_len = BUFF_SIZE / sizeof(NATIVE_WIDTH_TYPE);
+	// Ensure BUFF_SIZE is divisible by sizeof(NATIVE_WIDTH_TYPE)
+	assert(buff_len * sizeof(NATIVE_WIDTH_TYPE) == BUFF_SIZE);
+
+	NATIVE_WIDTH_TYPE *buff = malloc(BUFF_SIZE);
+	assert(buff);
+
+	while(run) {
+		buff[index++] = target;
+		if(index >= buff_len) {
+			index = 0;
+		}
+		cnt++;
+	}
+
+	free(buff);
+}
+
+void thrash_rw() {
+	assert(BUFF_SIZE);
+	size_t buff_len = BUFF_SIZE / sizeof(NATIVE_WIDTH_TYPE);
+	// Ensure BUFF_SIZE is divisible by sizeof(NATIVE_WIDTH_TYPE)
+	assert(buff_len * sizeof(NATIVE_WIDTH_TYPE) == BUFF_SIZE);
+
+	NATIVE_WIDTH_TYPE *buff_r = malloc(BUFF_SIZE);
+	assert(buff_r);
+	NATIVE_WIDTH_TYPE *buff_w = malloc(BUFF_SIZE);
+	assert(buff_w);
+
+	while(run) {
+		assert(memcpy(buff_w, buff_r, BUFF_SIZE) == buff_w);
+		cnt += buff_len;
+	}
+
+	free(buff_w);
+	free(buff_r);
+}
+
+int main(int argc, char** argv) {
+	int mode = THRASH_RW;
+	if(argc > 1) {
+		assert(argc == 2);
+		if(strcmp("rw", argv[1])) {
+//			Everything ok, default to mode = THRASH_RW;
+		} else if(strcmp("r", argv[1])) {
+			mode = THRASH_RO;
+		} else {
+			assert(strcmp("w", argv[1]));
+			mode = THRASH_WO;
+		}
+	}
+
+	assert(!signal(SIGINT, handle_sigint));
+	assert(!signal(SIGALRM, handle_sigalrm));
+
+	printf("PID %zu\n", getpid());
+
+	alarm(1);
+
+	switch(mode) {
+		case THRASH_RO: thrash_ro(); break;
+		case THRASH_WO: thrash_wo(); break;
+		case THRASH_RW: thrash_rw(); break;
+	}
 
 	printf("\n");
 
