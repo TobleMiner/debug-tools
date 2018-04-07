@@ -34,5 +34,7 @@ int main(int argc, char** argv) {
 		cnt++;
 	}
 
+	printf("\n");
+
 	return 0;
 }

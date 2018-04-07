@@ -58,5 +58,8 @@ int main(int argc, char** argv) {
 	}
 
 	free(buff);
+
+	printf("\n");
+
 	return 0;
 }
