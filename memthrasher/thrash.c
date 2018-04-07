@@ -104,12 +104,12 @@ int main(int argc, char** argv) {
 	int mode = THRASH_RW;
 	if(argc > 1) {
 		assert(argc == 2);
-		if(strcmp("rw", argv[1])) {
+		if(!strcmp("rw", argv[1])) {
 //			Everything ok, default to mode = THRASH_RW;
-		} else if(strcmp("r", argv[1])) {
+		} else if(strchr(argv[1], 'r') == argv[1]) {
 			mode = THRASH_RO;
 		} else {
-			assert(strcmp("w", argv[1]));
+			assert(strchr(argv[1], 'w') == argv[1]);
 			mode = THRASH_WO;
 		}
 	}
@@ -122,9 +122,9 @@ int main(int argc, char** argv) {
 	alarm(1);
 
 	switch(mode) {
-		case THRASH_RO: thrash_ro(); break;
-		case THRASH_WO: thrash_wo(); break;
-		case THRASH_RW: thrash_rw(); break;
+		case THRASH_RO: printf("Performing RO test\n"); thrash_ro(); break;
+		case THRASH_WO: printf("Performing WO test\n"); thrash_wo(); break;
+		case THRASH_RW: printf("Performing RW test\n"); thrash_rw(); break;
 	}
 
 	printf("\n");
